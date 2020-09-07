@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+  <title>Hello, Progress Bar!!!</title>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm">
+        <h1>Hello, Progress Bar!!</h1>
+      </div>
+    </div>
+    <div class="row"></div>
+    <div class="row">
+      <div class="col-sm">
+        <div class="progress">
+          <div id='bar' class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0"
+            aria-valuemax="100">0%</div>
+        </div>
+      </div>
+      <div class="col-sm">
+        <button id='button-clear' type="button" class="btn btn-dark" disabled>Clear</button>
+        <button id='button-start' type="button" class="btn btn-success" disabled>Start</button>
+      </div>
+    </div>
+    <div class="row"></div>
+    <div class="row ">
+      <div class="col-sm">
+        <div id='alert-disconnected' class="alert alert-warning fade" role="alert" visble>
+          The websocket is disconnected!
+        </div>
+        <div id='alert-connected' class="alert alert-success fade" role="alert">
+          Connection established!
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
+
+
+  <script>
+    $(document).ready(function () {
+      //this IP is where the server is running by default if you use an ESP32
+      var url = "ws://192.168.0.102:1337/";
+      var barValue = 0;
+
+      // This is called when the page finishes loading
+      //   function init() {
+      var bar = document.getElementById('bar');
+      var buttonClear = document.getElementById('button-clear');
+      var buttonStart = document.getElementById('button-start');
+      var disconnected = document.getElementById('alert-disconnected');
+      var connected = document.getElementById('alert-connected');
+
+      $('#alert-disconnected').addClass("show");
+      $('#alert-disconnected').removeClass("fade");
+      $('#alert-connected').addClass("fade");
+      $('#alert-connected').removeClass("show");
+
+      wsConnect(url);
+
+      // Call this to connect to the WebSocket server
+      function wsConnect(url) {
+        // Connect to WebSocket server
+        websocket = new WebSocket(url);
+        websocket.onopen = function (evt) { onOpen(evt) };
+        websocket.onclose = function (evt) { onClose(evt) };
+        websocket.onmessage = function (evt) { onMessage(evt) };
+        websocket.onerror = function (evt) { onError(evt) };
+      }
+
+      // Called when a WebSocket connection is established with the server
+      function onOpen(evt) {
+        console.log("Connected");
+        buttonClear.disabled = false;
+        buttonStart.disabled = false;
+
+        $('#alert-connected').addClass("show");
+        $('#alert-connected').removeClass("fade");
+        $('#alert-disconnected').addClass("fade");
+        $('#alert-disconnected').removeClass("show");
+        //       doSend(barValue);
+      }
+
+      // Called when the WebSocket connection is closed
+      function onClose(evt) {
+        console.log("Disconnected");
+        buttonClear.disabled = true;
+        buttonStart.disabled = true;
+
+        $('#alert-disconnected').addClass("show");
+        $('#alert-disconnected').removeClass("fade");
+        $('#alert-connected').addClass("fade");
+        $('#alert-connected').removeClass("show");
+        setTimeout(function () { wsConnect(url) }, 2000);
+      }
+
+      // Called when a message is received from the server
+      function onMessage(evt) {
+        console.log("Received: " + evt.data);
+        bar.style.width = bar.innerText = evt.data + "%";
+      }
+
+      // Called when a WebSocket error occurs
+      function onError(evt) {
+        console.log("ERROR: " + evt.data);
+      }
+
+      // Sends a message to the server (and prints it to the console)
+      function doSend(message) {
+        console.log("Sending: " + message);
+        websocket.send(message);
+      }
+
+      buttonStart.onclick = function () {
+        //TODO: send websocketmessage to start animation
+        doSend("startBarAnimation");
+      }
+
+      buttonClear.onclick = function () {
+        barValue = 0;
+        bar.style.width = bar.innerText = "0%";
+        doSend("clearBarValue");
+      };
+    });
+  </script>
+
+</body>
+
+</html>
